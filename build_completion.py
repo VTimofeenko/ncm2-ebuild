@@ -5,6 +5,7 @@ import bashlex
 import shlex
 import subprocess
 from toolz import partition, compose
+from jinja2 import Environment, Template, FileSystemLoader
 
 # Dictionary for custom definitions
 custom_dict = {
@@ -34,7 +35,7 @@ def override_from_dict(f):
 
 def make_word_menu_entry(word: str, menu: str) -> str:
     """Returns printable form of an entry. 'word' will be the word to complete, 'menu' - description"""
-    return "\\ {'word': '" + word + "', 'menu': '" + menu + "'},"
+    return "\\ {'word': '" + word + "', 'menu': '" + menu.replace("'", "''") + "'},"
 
 
 @override_from_dict
@@ -160,7 +161,26 @@ def get_all_eclass_manpages() -> List[str]:
     return output
 
 
-phase_menu_entries = map(parse_phase_function, get_phase_functions())
+def render_template(sets) -> str:
+    from datetime import date
+
+    env = Environment(
+        loader=FileSystemLoader(str(Path.cwd()) + "/.template"), autoescape=False
+    )
+    env.lstrip_blocks = True
+    env.trim_blocks = True
+
+    template = env.get_template("ncm2_ebuild.vim")
+    template.globals["match_entry"] = make_word_menu_entry
+    # return template.render(phase_functions=phase_functions, date=date.today())
+    return template.render(sets=sets, date=date.today())
+
+
+def get_phase_match_entries():
+    phase_menu_entries = tuple(map(parse_phase_function, get_phase_functions()))
+    return tuple((f"{_[0]}" + "(){ }", _[1]) for _ in phase_menu_entries)
+
+
 variables_menu_entries = parse_tables(
     Path("devmanual/ebuild-writing/variables/text.xml")
 )
@@ -171,5 +191,17 @@ for cat in ("build", "error", "install", "message", "query", "sandbox"):
 # get_funcs_from_file(Path("/var/db/repos/gentoo/eclass/verify-sig.eclass"))
 _ = get_funcs_from_file(Path("/usr/share/man/man5/verify-sig.eclass.5.bz2"))
 get_all_eclass_manpages()
+sets = {
+    "phase_functions": {
+        "word_pattern": "^[a-z]",  # the phase functions are typically not indented
+        "mark": "epf",
+        "matches": get_phase_match_entries(),
+    },
+    "variables": {
+        # No word pattern, because variables can be used all over the place
+        "mark": "evar",
+        "matches": variables_menu_entries,
+    },
+}
 
-breakpoint()
+Path("autoload/ncm2_ebuild.vim").write_text(render_template(sets))
