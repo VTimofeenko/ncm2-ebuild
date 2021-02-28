@@ -1,0 +1,3 @@
+[submodule "devmanual"]
+	path = devmanual
+	url = https://github.com/gentoo/devmanual
