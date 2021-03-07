@@ -9,51 +9,53 @@ let s:loaded = 1
 
 let g:ncm2_ebuild#proc = yarp#py3('ncm2_ebuild')
 let g:ncm2_ebuild#proc.on_load = 'ncm2_ebuild#on_load'
-" The list of classes to be included in completion
-let g:ncm2_ebuild#eclass_list = ['desktop']
+" Sample list of classes to be included from completion
+"let g:ncm2_ebuild#eclass_exclude = ['ada']
+let g:ncm2_ebuild#eclass_exclude = ['',]
 
 func! ncm2_ebuild#on_warmup(ctx) abort
 	call g:ncm2_ebuild#proc.jobstart()
 endfunc
+
+func! s:exclude_filter(cond)
+	if index(g:ncm2_ebuild#eclass_exclude, a:cond) == -1
+		return 1
+	else
+		return 0
+	endif
+endfunc
+
 {# global block -#}
 
 func! ncm2_ebuild#init() abort
-{% for set in sets %}
-	call ncm2#register_source(g:ncm2_ebuild#{{ set }})
-{% endfor %}
+    let source_list = [
+    {%- for source in sources.values() -%}'{{ source[0].name }}', {% endfor %}]
+
+    for ncm2_src in source_list
+        " to exclude the eclasses from the top list
+        if s:exclude_filter(ncm2_src)
+            execute 'call ncm2#register_source(g:ncm2_ebuild#' . ncm2_src . ')'
+        endif
+        " call ncm2#register_source(g:ncm2_ebuild# source[0].name )
+	endfor
 endfunc
 
+{% for source in sources.values() %}
+" Start {{ source[0].name }} completion
+{{ source[0].format_to_vim() }}
 
-{% for set, content in sets.items() %}
-" Start {{ set }} completion
-" # character doesn't work well with abbreviation match
-let g:ncm2_ebuild#{{ set }} = extend(
-			\ get(g:, 'ncm2_ebuild#{{ set }}', {}), {
-			\ 'name': 'ebuild_{{ set }}',
-			\ 'scope': ['ebuild'],
-			\ 'priority': 0,
-			{% if content["mark"] %}
-			\ 'mark': {{ content["mark"] }},
-			{% else %}
-			\ 'mark': 'ec',
-			{% endif %}
-			\ 'on_complete': 'ncm2_ebuild#on_complete_{{ set }}',
-			\ 'complete_length': 1,
-			{% if content["word_pattern"] %}
-			\ 'word_pattern': '{{ content["word_pattern"] }}',
-			{% endif %}
-			\ }, 'keep')
-			"\ 'word_pattern': ':[\w+-]*:?',
+func! ncm2_ebuild#on_complete_{{ source[0].name }}(ctx) abort
+    {{ source[1].format_to_vim() }}
+    {%- if source[0].name == "general" %}
+    " filter out exclude list of eclasses to reduce spam
+    "call filter(matches, {idx, val -> index(g:ncm2_ebuild#eclass_exclude, val) == -1})
+    call filter(matches, {idx, val -> s:exclude_filter(val['word'])})
+    {% endif %}
 
-func! ncm2_ebuild#on_complete_{{ set }}(ctx) abort
-	let matches = [
-                {% for entry in content["matches"] %}
-                {{ match_entry(entry[0], entry[1]) }}
-                {% endfor %}
-				\ ]
 	call ncm2#complete(a:ctx, a:ctx.startccol, matches)
 endfunc
-" End {{ set }} completion
+" End {{ source[0].name }} completion
 
 {% endfor %}
+
 " Generated on {{ date }}
