@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Set, Union, Callable
+from typing import List, Set, Union, Callable, Optional
 from build_completion.utils import vim_line_prepend, print_attribute
 
 # This is a module that provides plumbing for generating ncm2 dictionaries and entries
@@ -84,7 +84,7 @@ class Source(PrintableEntity):
 
     _name: str
     complete_pattern: List[str] = field(default_factory=list)
-    word_pattern: str = None
+    word_pattern: Optional[str] = None
     priority: int = field(
         default=8
     )  # 8 is suggested for language specific keyword but not smart

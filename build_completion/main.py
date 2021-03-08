@@ -71,10 +71,10 @@ def build_ncm2_sources() -> Dict[str, Tuple[Source, Matches]]:
     def general_source():
         return Source("general", mark="e_gen", complete_length=1), Matches(
             {Match(_word=_[0], _menu=_[1]) for _ in manual_completions}
-            | {
-                Match(_word=_[0], _menu=_[1], custom_menu_formatter=eclass_formatter)
-                for _ in cache["eclass_list"]
-            }
+            # | {
+            #     Match(_word=_[0], _menu=_[1], custom_menu_formatter=eclass_formatter)
+            #     for _ in cache["eclass_list"]
+            # }
         )
 
     result.update({"general": general_source()})
@@ -143,28 +143,39 @@ def build_ncm2_sources() -> Dict[str, Tuple[Source, Matches]]:
     result.update({"inherit": inherit_source()})
 
     # all eclasses
-    def eclass_source(eclass_name, eclass_matches):
-        _name = sanitize_eclass_name(eclass_name)
+    def eclass_source(eclass_name, eclass_matches, mode):
+        _name = sanitize_eclass_name(eclass_name) + f"_{mode[0]}"
+        if mode == "functions":
+            complete_pattern = [eclass_name + "_"]
+            word_pattern = "\S+"
+            menu_formatter = func_formatter
+            complete_length = -1
+        elif mode == "variables":
+            complete_pattern = None
+            word_pattern = None
+            menu_formatter = var_formatter
+            complete_length = 1
+        else:
+            raise ValueError
         return Source(
             _name,
             mark=f"{_name}_cl",
-            complete_pattern=[eclass_name + "_"],
+            complete_pattern=complete_pattern,
             priority=9,
-            word_pattern="\S+",
+            word_pattern=word_pattern,
+            complete_length=complete_length,
         ), Matches(
             {
-                Match(_word=_[0], _menu=_[1], custom_menu_formatter=func_formatter)
-                for _ in eclass_matches["functions"]
-            }
-            | {
-                Match(_word=_[0], _menu=_[1], custom_menu_formatter=var_formatter)
-                for _ in eclass_matches["variables"]
+                Match(_word=_[0], _menu=_[1], custom_menu_formatter=menu_formatter)
+                for _ in eclass_matches[mode]
             }
         )
 
     for eclass, matches in cache["eclasses"].items():
-        if matches["functions"] or matches["variables"]:
-            result.update({eclass: eclass_source(eclass, matches)})
+        if matches["functions"]:
+            result.update({f"{eclass}_f": eclass_source(eclass, matches, "functions")})
+        if matches["variables"]:
+            result.update({f"{eclass}_v": eclass_source(eclass, matches, "variables")})
 
     return result
 

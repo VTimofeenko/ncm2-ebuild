@@ -11,8 +11,10 @@ def vim_line_prepend(s: str) -> str:
 def vim_escape_quote(s: Union[str, int]) -> Union[str, int]:
     if isinstance(s, int):
         return s
-    else:
+    elif isinstance(s, str):
         return s.replace("'", "''")
+    else:
+        breakpoint()
 
 
 def print_attribute(attribute: str, ob) -> str:
