@@ -32,7 +32,7 @@ func! Check_inherits()
 
 	" unregister all current sources
 	for src in s:current_list_of_sources
-		silent! execute 'call ncm2#unregister_source("ebuild_' . src . '")'
+		silent! execute 'call ncm2#unregister_source("' . src . '")'
 	endfor
 
 	" echo s:current_list_of_sources
