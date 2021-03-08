@@ -130,7 +130,7 @@ def build_ncm2_sources() -> Dict[str, Tuple[Source, Matches]]:
         return Source(
             "inherit_eclasses",
             mark="e_inherit",
-            priority=0,
+            priority=9,
             complete_pattern=["inherit [\w ]*"],
             word_pattern="\S+",
         ), Matches(
