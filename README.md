@@ -5,6 +5,8 @@ This is a [NCM2](https://github.com/ncm2/ncm2)-based neovim completions plugin f
 
 # Demo
 
+Click the image below to see the demo on asciinema:
+
 [![asciicast](https://asciinema.org/a/397575.png)](https://asciinema.org/a/397575)
 
 # Features
