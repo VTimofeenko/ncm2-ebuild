@@ -1,0 +1,1 @@
+To test the changes, edit the `minirc.vim` file in `test` directory to produce a minimal vimrc file.
