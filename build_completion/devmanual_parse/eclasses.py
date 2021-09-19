@@ -24,6 +24,8 @@ def _parse_eclass_file(eclass: Path) -> BeautifulSoup:
         cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
     output = ps.communicate()[0]
+    if ps.returncode != 0:
+        raise Exception(output)
     return BeautifulSoup(output, "lxml")
 
 
